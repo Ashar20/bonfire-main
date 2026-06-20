@@ -1,0 +1,11 @@
+{
+  "name": "Ember",
+  "id": "ember-default",
+  "llm": { "provider": "zerog" },
+  "channels": {
+    "telegram": { "enabled": true, "dmPolicy": "open" },
+    "web": { "enabled": true, "path": "/chat" }
+  },
+  "tools": { "builtin": { "webFetch": { "enabled": true }, "webSearch": { "enabled": false, "provider": "tavily" } } },
+  "evolution": { "mode": "suggest", "interests": ["search", "github", "calendar"] }
+}
