@@ -55,7 +55,9 @@ Each `bonfire-claw` is configured by an **agent directory** containing:
 
 ## On-Chain & Verifiability
 
-- **Agents are ERC-7857 INFTs** minted on 0G Chain (chainID `16661`). Private metadata encrypted on 0G Storage; public metadata (name, avatar, rate card) on-chain. Transfer / rent / license modes; royalties paid to the creator on every invocation.
+**Deployed contract (0G Galileo Testnet, chainID `16602`):** [`BonFireAgentINFT`](contracts/contracts/BonFireAgentINFT.sol) at [`0x151819ebc4435937f704FbB726DE6f99Bda262Bb`](https://chainscan-galileo.0g.ai/address/0x151819ebc4435937f704FbB726DE6f99Bda262Bb).
+
+- **Agents are ERC-7857 INFTs** minted on 0G Chain. Private metadata encrypted on 0G Storage; public metadata (name, avatar, rate card) on-chain. Transfer / rent / license modes; royalties paid to the creator on every invocation.
 - **Server escrow contracts** hold each workspace's `0G` balance. Spend is gated by per-channel and per-agent caps; every invocation is logged with cost, model, TEE attestation hash, and storage CID.
 - **TEE Sealed Inference** by default — Intel TDX CPU + NVIDIA H100/H200 GPU enclave. Each agent message exposes a **"Verify"** action that surfaces the Remote Attestation report inline.
 - **Verified-finance flows** (agents that move funds) require TEE-attested inference + an on-chain signature from the agent's bound Privy server-wallet + a policy check (allowlist, value cap, multi-sig over threshold).
