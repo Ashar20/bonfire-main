@@ -180,8 +180,8 @@ export function McpManager({ agentId, canManage = true }: { agentId: string; can
       setServers(r.servers);
       setForm(EMPTY_FORM);
       setShowForm(false);
-    } catch (e: any) {
-      setError(e?.message ?? "Failed to add server");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to add server");
     } finally {
       setSaving(false);
     }
@@ -209,8 +209,8 @@ export function McpManager({ agentId, canManage = true }: { agentId: string; can
     try {
       await bf.removeMcpServer(agentId, id);
       setServers(prev => { const n = { ...prev }; delete n[id]; return n; });
-    } catch (e: any) {
-      setError(e?.message ?? "Failed to remove server");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to remove server");
     } finally {
       setRemoving(null);
     }
