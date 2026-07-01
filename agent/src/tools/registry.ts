@@ -5,6 +5,7 @@ import { makeWebSearchTool } from './builtin/web-search.js';
 import { makeCodeExecTool } from './builtin/code-exec.js';
 import { makeFileOpsTools } from './builtin/file-ops.js';
 import { publishSiteTool } from './builtin/publish-site.js';
+import { currentTimeTool } from './builtin/current-time.js';
 import type { McpHandle } from './mcp-client.js';
 
 export function buildToolRegistry(cfg: AgentConfig, mcpHandles: McpHandle[]): Record<string, Tool> {
@@ -18,6 +19,7 @@ export function buildToolRegistry(cfg: AgentConfig, mcpHandles: McpHandle[]): Re
   if (b.codeExec.enabled) tools.code_exec = makeCodeExecTool(b.codeExec.timeoutMs);
   if (b.fileOps.enabled) Object.assign(tools, makeFileOpsTools(b.fileOps.rootDir));
   if (b.publishSite.enabled) tools.publish_site = publishSiteTool;
+  if (b.currentTime.enabled) tools.current_time = currentTimeTool;
   for (const h of mcpHandles) Object.assign(tools, h.tools);
   return tools;
 }

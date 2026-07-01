@@ -9,6 +9,8 @@ import { channelRoutes } from './routes/channels.js';
 import { eventsRoutes } from './routes/events.js';
 import { chatRoutes } from './routes/chat.js';
 import { tenantsRoutes } from './routes/tenants.js';
+import { sessionsRoutes } from './routes/sessions.js';
+import { statusRoutes } from './routes/status.js';
 import type { EventEmitter } from 'node:events';
 import type { WebChatAdapter } from '../channels/web.js';
 import type { AgentConfig } from '../config/schema.js';
@@ -28,6 +30,8 @@ export interface ApiDeps {
   patchConfig: (p: Partial<AgentConfig>) => Promise<void>;
   patchTelegram: (p: any) => Promise<void>;
   tenantRegistry: TenantRegistry;
+  resetSession: (key: { channel: string; chatId: string; topic?: string }) => number;
+  memoryStats: () => { sessions: number; messages: number; vectors: number };
 }
 
 export function startApi(port: number, d: ApiDeps) {
@@ -47,5 +51,12 @@ export function startApi(port: number, d: ApiDeps) {
   app.route('/', eventsRoutes(d.bus));
   app.route('/', chatRoutes(d.web, d.publicDir));
   app.route('/', tenantsRoutes(d.tenantRegistry));
+  app.route('/', sessionsRoutes({ resetSession: d.resetSession }));
+  app.route('/', statusRoutes({
+    getConfig: d.getConfig,
+    listSkills: d.listSkills,
+    evolutionMode: d.evolutionMode,
+    memoryStats: d.memoryStats,
+  }));
   return serve({ fetch: app.fetch, port });
 }

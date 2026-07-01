@@ -17,6 +17,13 @@ export class SessionManager {
     this.store.appendMessage(sessionId, role, content);
   }
 
+  /** Clear the conversation for a session. Returns the number of messages removed (0 if unknown). */
+  reset(key: SessionKey): number {
+    const sid = this.store.findSession(key.channel, key.chatId, key.topic ?? '');
+    if (sid === null) return 0;
+    return this.store.clearSession(sid);
+  }
+
   maybeCompact(sessionId: number, tokenEstimate: number) {
     if (tokenEstimate < this.compactAfter) return;
     const total = this.store.countMessages(sessionId);
