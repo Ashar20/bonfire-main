@@ -93,6 +93,8 @@ async function main() {
     patchConfig: async (p) => { Object.assign(loaded.config, p); },
     patchTelegram: async (p) => { Object.assign(loaded.config.channels.telegram, p); await telegram.stop(); telegram.start((m) => runtime.handle(m)); },
     tenantRegistry,
+    resetSession: (key) => runtime.resetSession(key),
+    memoryStats: () => store.stats(),
   });
 
   log.info({ port, skills: skills.length, mcp: mcpHandles.length, web: true, telegram: loaded.config.channels.telegram.enabled }, 'ready');

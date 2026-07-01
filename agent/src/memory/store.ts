@@ -140,6 +140,28 @@ export class MemoryStore {
     return c;
   }
 
+  /** Look up a session id without creating one. Returns null if it does not exist. */
+  findSession(channel: string, chatId: string, topic = ''): number | null {
+    const found = this.sessions.find(s => s.channel === channel && s.chat_id === chatId && s.topic === topic);
+    return found ? found.id : null;
+  }
+
+  /** Delete all messages + vectors for a session (keeps the session row). Returns messages removed. */
+  clearSession(sessionId: number): number {
+    const msgsBefore = this.messages.length;
+    this.messages = this.messages.filter(m => m.session_id !== sessionId);
+    const removed = msgsBefore - this.messages.length;
+    const vecsBefore = this.vectors.length;
+    this.vectors = this.vectors.filter(v => v.session_id !== sessionId);
+    if (removed > 0 || this.vectors.length !== vecsBefore) this.schedulePersist();
+    return removed;
+  }
+
+  /** Aggregate counts across all sessions — used by the /status endpoint. */
+  stats(): { sessions: number; messages: number; vectors: number } {
+    return { sessions: this.sessions.length, messages: this.messages.length, vectors: this.vectors.length };
+  }
+
   deleteOldMessages(sessionId: number, keepLast: number) {
     const idsDesc = this.messages
       .filter(m => m.session_id === sessionId)

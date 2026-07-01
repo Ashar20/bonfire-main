@@ -5,7 +5,7 @@ import { hashEnv } from './env-hash.js';
 import type { LoadedAgent } from '../config/loader.js';
 import type { SkillRecord } from '../skills/loader.js';
 import type { MemoryStore } from '../memory/store.js';
-import { SessionManager } from './session.js';
+import { SessionManager, type SessionKey } from './session.js';
 import { log } from '../util/logger.js';
 import type { InboundMessage, TenantPayload } from '../channels/base.js';
 import type { EmbeddingModel } from 'ai';
@@ -76,6 +76,11 @@ export class AgentRuntime {
         this.modelCache.delete(key);
       }
     }
+  }
+
+  /** Clear the stored conversation for a session. Returns messages removed. */
+  resetSession(key: SessionKey): number {
+    return this.sessions.reset(key);
   }
 
   async handle(msg: InboundMessage): Promise<void> {
