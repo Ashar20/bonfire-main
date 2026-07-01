@@ -4,12 +4,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repo shape
 
-Two buildable trees plus product docs:
+Buildable trees plus product docs. A pnpm workspace ([pnpm-workspace.yaml](pnpm-workspace.yaml)) ties together **`agent`, `backend`, and `contracts`**; `app` and `web` are standalone npm trees outside the workspace.
 
-- [agent/](agent/) — `ember-agent`, the standalone agent runtime (TypeScript/Node, pnpm, Dockerizable). Self-contained, one agent per directory, no multi-tenant logic.
-- [app/](app/) — the BonFire wrapper UI (Next.js 14, npm). The marketplace + workspace surfaces that consume the agent runtime.
+- [agent/](agent/) — `ember-agent`, the standalone agent runtime (TypeScript/Node, pnpm, Dockerizable). Self-contained, one agent per directory, no multi-tenant logic. (workspace pkg: `ember-agent`)
+- [backend/](backend/) — `bonfire-backend`, the Hono HTTP server (Node ≥ 20, pnpm). MongoDB persistence, 0G-chain INFT gate, Daily.co voice, Privy auth. Vitest tests run in-process via `mongodb-memory-server` + `OG_STORAGE_MOCK=1`. (workspace pkg: `bonfire-backend`)
+- [contracts/](contracts/) — `bonfire-contracts`, a Hardhat Solidity project. `BonFireAgentINFT` (ERC-721 soulbound INFT with encrypted metadata + usage authorization); ABI is exported to `contracts/abi/` and consumed by backend + app. (workspace pkg: `bonfire-contracts`)
+- [app/](app/) — the BonFire wrapper UI (Next.js 14, **npm**). The marketplace + workspace surfaces that consume the agent runtime. Deployed on Vercel ([vercel.json](vercel.json), `installCommand: npm install`).
+- [web/](web/) — **legacy** React 17 Discord-UI-clone client (npm, `react-app-rewired`). Not in the workspace, not deployed; kept as reference. Prefer `app/` for any new UI work.
+- [scripts/](scripts/) — `verify-inft-integration.sh`, the cross-package smoke check (contracts + backend + agent + app) used as the basis for CI.
 
-`bonfire` is the umbrella product; `ember-agent` is what BonFire wraps. Top-level files ([prd.md](prd.md), [agent-prd.md](agent-prd.md), [resources.md](resources.md), [judging-criteria.md](judging-criteria.md), [docs/superpowers/plans/](docs/superpowers/plans/)) are product/design context for the hackathon submission, not code.
+CI lives in [.github/workflows/ci.yml](.github/workflows/ci.yml): a `workspace` job (agent/backend/contracts typecheck + test) and an `app` job (install + lint).
+
+`bonfire` is the umbrella product; `ember-agent` is what BonFire wraps. Top-level files ([prd.md](prd.md), [agent-prd.md](agent-prd.md), [resources.md](resources.md), [judging-criteria.md](judging-criteria.md), [submission.md](submission.md)) are product/design context for the hackathon submission, not code.
 
 ## Commands
 
@@ -41,7 +47,33 @@ npm run start       # next start
 npm run lint        # eslint (flat config, eslint-config-next)
 ```
 
-The app is npm-based (`package-lock.json`); the agent is pnpm-based (`pnpm-lock.yaml`). Don't mix package managers across either tree.
+The app is npm-based (`package-lock.json`); the agent/backend/contracts share the root pnpm workspace (`pnpm-lock.yaml`). Don't mix package managers across a tree.
+
+### Backend (from [backend/](backend/), Node ≥ 20, pnpm)
+
+```bash
+pnpm install                       # or from repo root (workspace)
+pnpm dev                           # tsx watch on src/index.ts (needs Docker for Mongo)
+pnpm dev:no-docker                 # DEV_MEMORY_MONGO=1 — in-process Mongo
+pnpm typecheck                     # tsc --noEmit
+OG_STORAGE_MOCK=1 pnpm test        # vitest run, in-process Mongo + mocked 0G storage
+```
+
+### Contracts (from [contracts/](contracts/), Hardhat, pnpm)
+
+```bash
+pnpm build                         # hardhat compile && copy ABI to contracts/abi/
+pnpm test                          # hardhat test
+pnpm deploy:ogtestnet              # DEPLOYER_PRIVATE_KEY=0x... required
+```
+
+### Cross-package + CI
+
+```bash
+bash scripts/verify-inft-integration.sh   # contracts + backend + agent + app smoke check
+```
+
+CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) runs the equivalent checks on push/PR. Pin: `pnpm 9`, Node 20; the app job uses `npm install` (parity with Vercel) since `package-lock.json` isn't pinned for `npm ci`.
 
 ## Architecture
 
