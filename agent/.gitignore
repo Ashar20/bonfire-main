@@ -6,6 +6,7 @@ logs/
 /memory/
 test/.tmp-mem.db
 test/.tmp-*.db
+test/.tmp-*.json
 examples/*/memory/
 examples/*/logs/
 examples/*/.env
