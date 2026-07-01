@@ -74,7 +74,27 @@ export function buildApp(deps: AppDeps) {
       maxAge: 600,
     })
   );
-  app.get('/health', (c) => c.json({ ok: true }));
+  app.get('/health', async (c) => {
+    let dbOk = true;
+    try {
+      await deps.db.command({ ping: 1 });
+    } catch {
+      dbOk = false;
+    }
+    const ok = dbOk;
+    return c.json(
+      {
+        ok,
+        uptimeSec: Math.round(process.uptime()),
+        subsystems: {
+          db: dbOk,
+          inft: Boolean(deps.inftDeps),
+          voice: Boolean(deps.voiceManager),
+        },
+      },
+      ok ? 200 : 503
+    );
+  });
   app.route('/', authRoutes(deps));
   app.route('/', userRoutes(deps));
   app.route('/', serverRoutes(deps));

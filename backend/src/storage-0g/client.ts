@@ -7,6 +7,7 @@
  */
 
 import { createHash } from 'node:crypto';
+import { log } from '../util/logger.js';
 import { mkdir, writeFile, readFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
@@ -150,8 +151,10 @@ function createRealStorage(): OgStorageClient {
           msg.includes('SERVER_ERROR');
         if (!retriable || attempt === maxAttempts) break;
         const delayMs = Math.min(15000, 1000 * 2 ** (attempt - 1));
-        // eslint-disable-next-line no-console
-        console.warn(`0G upload attempt ${attempt}/${maxAttempts} failed for "${key}": ${msg.slice(0, 200)} — retrying in ${delayMs}ms`);
+        log.warn(
+          { key, attempt, maxAttempts, delayMs, err: msg.slice(0, 200) },
+          '0G upload attempt failed — retrying'
+        );
         await new Promise((r) => setTimeout(r, delayMs));
       }
       if (lastErr) throw new Error(`0G upload failed for key "${key}" after ${maxAttempts} attempts: ${lastErr.message ?? lastErr}`);
