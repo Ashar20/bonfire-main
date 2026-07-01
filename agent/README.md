@@ -65,6 +65,19 @@ Every install is run through the security scanner first. Findings are surfaced; 
 
 Edit `mcp.json` or call `POST /mcp/servers { id, command, args, env }`. Child processes are spawned on boot and their tools are merged into the registry.
 
+## Built-in tools
+
+Toggled per-agent under `tools.builtin` in `agent.config.json`, exposed to the model in the tool-use loop (MCP server tools are merged on top):
+
+| Tool           | Config key    | Default | What it does                              |
+| -------------- | ------------- | ------- | ----------------------------------------- |
+| `web_fetch`    | `webFetch`    | on      | Fetch a URL                               |
+| `web_search`   | `webSearch`   | off     | Tavily/Brave search (needs an API key)    |
+| `code_exec`    | `codeExec`    | off     | Run code in a sandboxed subprocess        |
+| file ops       | `fileOps`     | off     | Read/write files under a root dir         |
+| `publish_site` | `publishSite` | on      | Publish a static site                     |
+| `current_time` | `currentTime` | on      | Current date/time in any IANA timezone    |
+
 ## Evolution mode
 
 In `agent.config.json` under `evolution.mode`:
@@ -82,7 +95,8 @@ No auth — assume network isolation. BonFire adds auth at its layer.
 
 | Method | Path                          | Purpose                       |
 | ------ | ----------------------------- | ----------------------------- |
-| GET    | `/health`                     | health + status               |
+| GET    | `/health`                     | liveness + uptime             |
+| GET    | `/status`                     | rich status (model, channels, skills, memory) |
 | GET    | `/skills`                     | list installed skills         |
 | POST   | `/skills/install`             | install from source           |
 | DELETE | `/skills/:name`               | remove a skill                |
@@ -96,6 +110,35 @@ No auth — assume network isolation. BonFire adds auth at its layer.
 | GET    | `/chat`                       | built-in web chat UI          |
 | POST   | `/chat/message`               | submit a chat message         |
 | GET    | `/chat/stream/:id`            | SSE reply stream              |
+| POST   | `/sessions/reset`             | clear a conversation          |
+
+### `GET /status`
+
+Read-only snapshot for monitoring and the wrapping product:
+
+```json
+{
+  "ok": true, "name": "Ember", "id": "ember", "uptime": 42.1,
+  "llm": { "provider": "openai-compatible", "model": "gpt-4o" },
+  "channels": { "web": true, "telegram": false },
+  "evolution": "suggest",
+  "skills": { "count": 3, "names": ["learn", "..."] },
+  "memory": { "sessions": 2, "messages": 10, "vectors": 4 }
+}
+```
+
+### `POST /sessions/reset`
+
+Clears the stored conversation (messages + memory vectors) for one session, keeping the session itself:
+
+```bash
+curl -X POST localhost:7777/sessions/reset \
+  -H 'content-type: application/json' \
+  -d '{ "chatId": "user-123", "channel": "web" }'
+# -> { "ok": true, "cleared": 12 }
+```
+
+`channel` defaults to `"web"`; pass `topic` to target a sub-thread.
 
 ## Project layout
 
